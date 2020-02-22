@@ -13,8 +13,8 @@ public class PortalDisplay : MonoBehaviour
     private Mesh mesh;
     void Start()
     {
-        material = new Material(Shader.Find("Sprites/Default"));
-        GetComponent<Renderer>().material = material;
+        // material = new Material(Shader.Find("Sprites/Default"));
+        material = GetComponent<Renderer>().material;
         
         mesh = GetComponent<MeshFilter>().mesh;
 
@@ -26,7 +26,7 @@ public class PortalDisplay : MonoBehaviour
 
     void Update()
     {
-        CalculateUVs();
+        // CalculateUVs();
     }
 
     public void SetTexture(RenderTexture texture)
@@ -42,7 +42,7 @@ public class PortalDisplay : MonoBehaviour
             uvs[i] = viewportPt;
         }
 
-        // GetComponent<MeshFilter>().mesh.uv = uvs;
+        mesh.uv = uvs;
     }
 
     void OnDrawGizmosSelected()
