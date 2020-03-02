@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -48,5 +49,19 @@ public class Portal : MonoBehaviour
     public void SetPortalDisplayTexture(RenderTexture texture)
     {
         portalDisplay.SetTexture(texture);
+    }
+
+    public void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Player")
+        {
+            target.TeleportPlayer(other.gameObject);
+        }
+    }
+
+    public void TeleportPlayer(GameObject player)
+    {
+        player.transform.position = portalRenderCamera.transform.position;
+        player.transform.rotation = portalRenderCamera.transform.rotation;
     }
 }
