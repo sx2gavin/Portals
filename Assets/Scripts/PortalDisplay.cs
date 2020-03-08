@@ -50,17 +50,17 @@ public class PortalDisplay : MonoBehaviour
         mesh = GetComponent<MeshFilter>().sharedMesh;
         displayVertices = mesh.vertices;
         // Gizmos.(transform.TransformPoint(displayVertices[0]), 0.1f);
-        Handles.Label(transform.TransformPoint(displayVertices[0]), "1");
+        // Handles.Label(transform.TransformPoint(displayVertices[0]), "1");
     }
 
     void OnGUI()
     {
-        for (int i = 0; i < displayVertices.Length; i++)
-        {
-            Vector3 viewportPt = Camera.main.WorldToViewportPoint(transform.TransformPoint(displayVertices[i]));
+    //     for (int i = 0; i < displayVertices.Length; i++)
+    //     {
+    //         Vector3 viewportPt = Camera.main.WorldToViewportPoint(transform.TransformPoint(displayVertices[i]));
             
-            Handles.Label(transform.TransformPoint(displayVertices[i]), "viewport: " + viewportPt.ToString() + "\nuv: " + mesh.uv[i]);
+    //         Handles.Label(transform.TransformPoint(displayVertices[i]), "viewport: " + viewportPt.ToString() + "\nuv: " + mesh.uv[i]);
             
-        }
+    //     }
     }
 }

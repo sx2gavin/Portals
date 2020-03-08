@@ -8,7 +8,10 @@ public class Portal : MonoBehaviour
     [SerializeField] private Portal target;
     [SerializeField] private PortalCamera portalRenderCamera;
     [SerializeField] private PortalDisplay portalDisplay;
-    
+    [SerializeField] private float portalDisplayExpandFactor = 15.0f;
+
+    private Vector3 originalPortalScale;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -17,6 +20,8 @@ public class Portal : MonoBehaviour
             var texture = target.GetPortalCameraRenderTexture();
             SetPortalDisplayTexture(texture);
         }
+
+        originalPortalScale = portalDisplay.transform.localScale;
     }
 
     // Update is called once per frame
@@ -51,17 +56,26 @@ public class Portal : MonoBehaviour
         portalDisplay.SetTexture(texture);
     }
 
+    public void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Player")
+        {
+            portalDisplay.transform.localScale = new Vector3(portalDisplayExpandFactor, originalPortalScale.y, originalPortalScale.z);
+        }
+    }
+
     public void OnTriggerExit(Collider other)
     {
         if (other.tag == "Player")
         {
             target.TeleportPlayer(other.gameObject);
+            portalDisplay.transform.localScale = originalPortalScale;
         }
     }
 
     public void TeleportPlayer(GameObject player)
     {
         player.transform.position = portalRenderCamera.transform.position;
-        player.transform.rotation = portalRenderCamera.transform.rotation;
+        Camera.main.transform.rotation = portalRenderCamera.transform.rotation;
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 public class FirstPersonCharacterController : MonoBehaviour
 {
     [SerializeField] private float speed;
+    [SerializeField] private float jumpForce = 10f;
     [SerializeField] private Camera camera;
 
     private Rigidbody rigidbody;
@@ -18,6 +19,11 @@ public class FirstPersonCharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetButtonDown("Jump"))
+        {
+            rigidbody.AddForce(new Vector3(0, jumpForce, 0));
+        }
+
         var direction = new Vector3(-Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0);
         var angles = camera.transform.rotation.eulerAngles;
         angles += direction;
