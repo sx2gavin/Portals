@@ -11,6 +11,7 @@ public class Portal : MonoBehaviour
     [SerializeField] private float portalDisplayExpandFactor = 15.0f;
 
     private Vector3 originalPortalScale;
+    private bool enteredFromBack;
 
     // Start is called before the first frame update
     void Start()
@@ -60,7 +61,12 @@ public class Portal : MonoBehaviour
     {
         if (other.tag == "Player")
         {
+            var playerVecFromPortal = other.transform.position - transform.position;
+            enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.right) < 0;
             portalDisplay.transform.localScale = new Vector3(portalDisplayExpandFactor, originalPortalScale.y, originalPortalScale.z);
+            var localPosition = portalDisplay.transform.localPosition;
+            var portalAdjustment = (enteredFromBack ? 1 : -1) * portalDisplayExpandFactor * 0.1f / 2f;
+            portalDisplay.transform.localPosition = new Vector3(portalAdjustment, localPosition.y, localPosition.z);
         }
     }
 
@@ -68,8 +74,14 @@ public class Portal : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            target.TeleportPlayer(other.gameObject);
+            var playerVecFromPortal = other.transform.position - transform.position;
+            bool exitFromFront = Vector3.Dot(playerVecFromPortal, transform.right) > 0;
+            if (enteredFromBack == exitFromFront)
+            {
+                target.TeleportPlayer(other.gameObject);
+            }
             portalDisplay.transform.localScale = originalPortalScale;
+            portalDisplay.transform.localPosition = new Vector3(0, portalDisplay.transform.localPosition.y, 0);
         }
     }
 
