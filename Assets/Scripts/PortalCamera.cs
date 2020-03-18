@@ -39,4 +39,9 @@ public class PortalCamera : MonoBehaviour
 
         return camera.targetTexture;
     }
+
+    public void Render()
+    {
+        camera.Render();
+    }
 }

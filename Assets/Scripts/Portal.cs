@@ -13,6 +13,9 @@ public class Portal : MonoBehaviour
     private Vector3 originalPortalScale;
     private bool enteredFromBack;
 
+    private GameObject traveller;
+    private Vector3 previousTravellerPosition;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -35,7 +38,30 @@ public class Portal : MonoBehaviour
             var cameraLocalRotation = Quaternion.Inverse(transform.rotation) * mainCamera.transform.rotation;
 
             target.SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
+            if (traveller != null)
+            {
+                Vector3 forward = transform.right;
+                Vector3 previousVec = previousTravellerPosition - transform.position;
+                Vector3 currentVec = traveller.transform.position - transform.position;
+                float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
+                float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
+                if (previousSign + currentSign == 0)
+                {
+                    StartCoroutine(ResetCameraAndTeleportPlayer(cameraLocalPosition, cameraLocalRotation));
+                }
+                // Debug.Log("previous position - " + previousTravellerPosition + "; current position - " + traveller.transform.position);
+                previousTravellerPosition = traveller.transform.position;
+            }
         }
+    }
+
+    private IEnumerator ResetCameraAndTeleportPlayer(Vector3 cameraLocalPosition, Quaternion cameraLocalRotation)
+    {
+        SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
+        portalRenderCamera.Render();
+        yield return null;
+        Debug.Log("Teleported.");
+        target.TeleportPlayer(traveller);
     }
 
     public void SetPortalCameraLocalTransform(Vector3 localPosition, Quaternion localRotation)
@@ -61,11 +87,13 @@ public class Portal : MonoBehaviour
     {
         if (other.tag == "Player")
         {
+            traveller = other.gameObject;
+            previousTravellerPosition = traveller.transform.position;
             var playerVecFromPortal = other.transform.position - transform.position;
             enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.right) < 0;
             portalDisplay.transform.localScale = new Vector3(portalDisplayExpandFactor, originalPortalScale.y, originalPortalScale.z);
             var localPosition = portalDisplay.transform.localPosition;
-            var portalAdjustment = (enteredFromBack ? 1 : -1) * portalDisplayExpandFactor * 0.1f / 2f;
+            var portalAdjustment = (enteredFromBack ? 1 : -1) * (portalDisplayExpandFactor * 0.1f / 2f);
             portalDisplay.transform.localPosition = new Vector3(portalAdjustment, localPosition.y, localPosition.z);
         }
     }
@@ -74,12 +102,17 @@ public class Portal : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            var playerVecFromPortal = other.transform.position - transform.position;
+            /*
+            BoxCollider collider = GetComponent<BoxCollider>();
+            var playerVecFromPortal = other.transform.position - (transform.position + collider.center);
             bool exitFromFront = Vector3.Dot(playerVecFromPortal, transform.right) > 0;
             if (enteredFromBack == exitFromFront)
             {
                 target.TeleportPlayer(other.gameObject);
             }
+            */
+
+            traveller = null;
             portalDisplay.transform.localScale = originalPortalScale;
             portalDisplay.transform.localPosition = new Vector3(0, portalDisplay.transform.localPosition.y, 0);
         }
