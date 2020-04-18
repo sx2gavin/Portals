@@ -13,7 +13,7 @@ public class Portal : MonoBehaviour
     private Vector3 originalPortalScale;
     private bool enteredFromBack;
 
-    private PortalTraveller traveller;
+    private PortalTraveller playerTraveller;
     // private Vector3 previousTravellerPosition;
     private List<PortalTraveller> lstPortalTravellers = new List<PortalTraveller>();
 
@@ -39,32 +39,56 @@ public class Portal : MonoBehaviour
             var cameraLocalRotation = Quaternion.Inverse(transform.rotation) * mainCamera.transform.rotation;
 
             target.SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
-            if (traveller != null)
+            
+            if (playerTraveller != null)
             {
-                Vector3 forward = transform.right;
-                Vector3 previousVec = traveller.LastFramePosition - transform.position;
-                Vector3 currentVec = traveller.transform.position - transform.position;
-                float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
-                float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
-                if (previousSign + currentSign == 0)
+                if (CheckTravellerPassPortal(playerTraveller))
                 {
-                    TeleportTraveller(cameraLocalPosition, cameraLocalRotation);
+                    // pre-render target camera before player is teleported to smooth the transition.
+                    SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
+                    portalRenderCamera.Render();
+
+                    var portalPosition = portalDisplay.transform.localPosition;
+                    portalPosition.x = -portalPosition.x;
+                    target.PortalAdjustment(portalPosition, portalDisplay.transform.localScale);
+
+                    TeleportTravellerToTarget(playerTraveller);
+                }
+            }
+
+            foreach (PortalTraveller traveller in lstPortalTravellers)
+            {
+                if (CheckTravellerPassPortal(traveller))
+                {
+                    TeleportTravellerToTarget(traveller);
                 }
             }
         }
     }
 
-    private void TeleportTraveller(Vector3 cameraLocalPosition, Quaternion cameraLocalRotation)
+    private bool CheckTravellerPassPortal(PortalTraveller traveller)
     {
-        SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
-        portalRenderCamera.Render();
+        Vector3 forward = transform.right;
+        Vector3 previousVec = traveller.LastFramePosition - transform.position;
+        Vector3 currentVec = traveller.transform.position - transform.position;
+        float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
+        float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
+        return previousSign + currentSign == 0;
+    }
 
-        var portalPosition = portalDisplay.transform.localPosition;
-        portalPosition.x = -portalPosition.x;
-        target.PortalAdjustment(portalPosition, portalDisplay.transform.localScale);
+    private void TeleportTravellerToTarget(PortalTraveller traveller)
+    {
+        if (target != null)
+        {
+            Vector4 position = traveller.gameObject.transform.position;
+            position.w = 1.0f;
+            var newPosition = target.gameObject.transform.localToWorldMatrix * transform.worldToLocalMatrix * position;
+            traveller.gameObject.transform.position = newPosition;
 
-        Debug.Log("Teleported.");
-        target.ReceivePlayer(traveller);
+            Quaternion rotation = traveller.gameObject.transform.rotation;
+            var newRotation = target.gameObject.transform.rotation * Quaternion.Inverse(transform.rotation) * rotation;
+            traveller.gameObject.transform.rotation = newRotation;
+        }
     }
 
     public void SetPortalCameraLocalTransform(Vector3 localPosition, Quaternion localRotation)
@@ -91,10 +115,9 @@ public class Portal : MonoBehaviour
         PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
         if (portalTraveller != null)
         {
-            lstPortalTravellers.Add(portalTraveller);
             if (other.CompareTag("Player"))
             {
-                traveller = portalTraveller;
+                playerTraveller = portalTraveller;
                 var playerVecFromPortal = other.transform.position - transform.position;
                 enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.right) < 0;
                 var localPosition = portalDisplay.transform.localPosition;
@@ -104,7 +127,10 @@ public class Portal : MonoBehaviour
                 var portalPosition = new Vector3(portalAdjustment, localPosition.y, localPosition.z);
 
                 PortalAdjustment(portalPosition, portalScale);
-
+            }
+            else
+            {
+                lstPortalTravellers.Add(portalTraveller);
             }
         }
     }
@@ -120,11 +146,18 @@ public class Portal : MonoBehaviour
         PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
         if (portalTraveller != null)
         {
-            traveller = null;
-            var originalPosition = new Vector3(0, portalDisplay.transform.localPosition.y, 0);
+            if (other.CompareTag("Player"))
+            {
+                playerTraveller = null;
+                var originalPosition = new Vector3(0, portalDisplay.transform.localPosition.y, 0);
 
-            PortalAdjustment(originalPosition, originalPortalScale);
-            target.PortalAdjustment(originalPosition, originalPortalScale);
+                PortalAdjustment(originalPosition, originalPortalScale);
+                target.PortalAdjustment(originalPosition, originalPortalScale);
+            }
+            else
+            {
+                lstPortalTravellers.Remove(portalTraveller);
+            }
         }
     }
 
@@ -133,4 +166,5 @@ public class Portal : MonoBehaviour
         traveller.transform.position = portalRenderCamera.transform.position;
         Camera.main.transform.rotation = portalRenderCamera.transform.rotation;
     }
+
 }
