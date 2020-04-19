@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PortalTraveller : MonoBehaviour
 {
-    public Vector3 LastFramePosition;
+    [HideInInspector] public Vector3 LastFramePosition;
 
     private void LateUpdate()
     {
