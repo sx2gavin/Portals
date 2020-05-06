@@ -14,8 +14,8 @@ public class Portal : MonoBehaviour
     private bool enteredFromBack;
 
     private PortalTraveller playerTraveller;
-    // private Vector3 previousTravellerPosition;
     private List<PortalTraveller> lstPortalTravellers = new List<PortalTraveller>();
+    private Dictionary<PortalTraveller, GameObject> travellerCopies = new Dictionary<PortalTraveller, GameObject>();
 
     // Start is called before the first frame update
     void Start()
@@ -52,7 +52,7 @@ public class Portal : MonoBehaviour
                     portalPosition.x = -portalPosition.x;
                     target.PortalAdjustment(portalPosition, portalDisplay.transform.localScale);
 
-                    TeleportTravellerToTarget(playerTraveller);
+                    TransformToTarget(playerTraveller.transform);
                 }
             }
 
@@ -60,34 +60,11 @@ public class Portal : MonoBehaviour
             {
                 if (CheckTravellerPassPortal(traveller))
                 {
-                    TeleportTravellerToTarget(traveller);
+                    GameObject clone = travellerCopies[traveller];
+                    Destroy(clone);
+                    TransformToTarget(traveller.transform);
                 }
             }
-        }
-    }
-
-    private bool CheckTravellerPassPortal(PortalTraveller traveller)
-    {
-        Vector3 forward = transform.right;
-        Vector3 previousVec = traveller.LastFramePosition - transform.position;
-        Vector3 currentVec = traveller.transform.position - transform.position;
-        float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
-        float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
-        return previousSign + currentSign == 0;
-    }
-
-    private void TeleportTravellerToTarget(PortalTraveller traveller)
-    {
-        if (target != null)
-        {
-            Vector4 position = traveller.gameObject.transform.position;
-            position.w = 1.0f;
-            var newPosition = target.gameObject.transform.localToWorldMatrix * transform.worldToLocalMatrix * position;
-            traveller.gameObject.transform.position = newPosition;
-
-            Quaternion rotation = traveller.gameObject.transform.rotation;
-            var newRotation = target.gameObject.transform.rotation * Quaternion.Inverse(transform.rotation) * rotation;
-            traveller.gameObject.transform.rotation = newRotation;
         }
     }
 
@@ -113,7 +90,7 @@ public class Portal : MonoBehaviour
     public void OnTriggerEnter(Collider other)
     {
         PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
-        if (portalTraveller != null)
+        if (portalTraveller != null && portalTraveller.enabled)
         {
             if (other.CompareTag("Player"))
             {
@@ -131,6 +108,10 @@ public class Portal : MonoBehaviour
             else
             {
                 lstPortalTravellers.Add(portalTraveller);
+                TransformToTarget(portalTraveller.transform, out Vector3 newPos, out Quaternion newRot);
+                PortalTraveller travellerCopy = Instantiate(portalTraveller, newPos, newRot);
+                travellerCopy.enabled = false;
+                travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
             }
         }
     }
@@ -157,6 +138,8 @@ public class Portal : MonoBehaviour
             else
             {
                 lstPortalTravellers.Remove(portalTraveller);
+                DestroyTravellerCopy(portalTraveller);
+                travellerCopies.Remove(portalTraveller);
             }
         }
     }
@@ -165,6 +148,59 @@ public class Portal : MonoBehaviour
     {
         traveller.transform.position = portalRenderCamera.transform.position;
         Camera.main.transform.rotation = portalRenderCamera.transform.rotation;
+    }
+
+    private bool CheckTravellerPassPortal(PortalTraveller traveller)
+    {
+        Vector3 forward = transform.right;
+        Vector3 previousVec = traveller.LastFramePosition - transform.position;
+        Vector3 currentVec = traveller.transform.position - transform.position;
+        float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
+        float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
+        return previousSign + currentSign == 0;
+    }
+
+    private void TransformToTarget(Transform otherTransform)
+    {
+        if (target != null)
+        {
+            Vector4 position = otherTransform.position;
+            position.w = 1.0f;
+            var newPosition = target.gameObject.transform.localToWorldMatrix * transform.worldToLocalMatrix * position;
+            otherTransform.position = newPosition;
+
+            Quaternion rotation = otherTransform.rotation;
+            var newRotation = target.gameObject.transform.rotation * Quaternion.Inverse(transform.rotation) * rotation;
+            otherTransform.rotation = newRotation;
+        }
+    }
+
+    private void TransformToTarget(Transform otherTransform, out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+
+        if (target != null)
+        {
+            Vector4 originalPosition = otherTransform.position;
+            originalPosition.w = 1.0f;
+            position = target.gameObject.transform.localToWorldMatrix * transform.worldToLocalMatrix * originalPosition;
+
+            Quaternion originalRotation = otherTransform.rotation;
+            rotation = target.gameObject.transform.rotation * Quaternion.Inverse(transform.rotation) * originalRotation;
+        }
+    }
+
+    private void DestroyTravellerCopy(PortalTraveller traveller)
+    {
+        if (travellerCopies != null && travellerCopies.ContainsKey(traveller))
+        {
+            GameObject clone = travellerCopies[traveller];
+            if (clone != null)
+            {
+                Destroy(clone);
+            }
+        }
     }
 
 }

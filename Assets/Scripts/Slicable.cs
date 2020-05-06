@@ -17,7 +17,7 @@ public class Slicable : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (material != null)
+        if (material != null && Slice != null)
         {
             material.SetVector("sliceCentre", Slice.transform.position);
             material.SetVector("sliceNormal", Slice.transform.forward);
