@@ -107,12 +107,12 @@ public class Portal : MonoBehaviour
             {
                 playerTraveller = portalTraveller;
                 var playerVecFromPortal = other.transform.position - transform.position;
-                enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.right) < 0;
+                enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.forward) < 0;
                 var localPosition = portalDisplay.transform.localPosition;
                 var portalAdjustment = (enteredFromBack ? 1 : -1) * (portalDisplayExpandFactor * 0.1f / 2f);
 
                 var portalScale = new Vector3(portalDisplayExpandFactor, originalPortalScale.y, originalPortalScale.z);
-                var portalPosition = new Vector3(portalAdjustment, localPosition.y, localPosition.z);
+                var portalPosition = new Vector3(localPosition.x, localPosition.y, portalAdjustment);
 
                 PortalAdjustment(portalPosition, portalScale);
             }
@@ -137,6 +137,9 @@ public class Portal : MonoBehaviour
             simpleMoveComponent.enabled = false;
         }
 
+        Slicable slicable = portalTraveller.GetComponent<Slicable>();
+
+        slicable.Slice = gameObject;
 
         travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
     }
@@ -177,7 +180,7 @@ public class Portal : MonoBehaviour
 
     private bool CheckTravellerPassPortal(PortalTraveller traveller)
     {
-        Vector3 forward = transform.right;
+        Vector3 forward = transform.forward;
         Vector3 previousVec = traveller.LastFramePosition - transform.position;
         Vector3 currentVec = traveller.transform.position - transform.position;
         float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
