@@ -58,11 +58,22 @@ public class Portal : MonoBehaviour
 
             foreach (PortalTraveller traveller in lstPortalTravellers)
             {
+                GameObject clone = null;
+                if (travellerCopies.ContainsKey(traveller))
+                {
+                    clone = travellerCopies[traveller];
+                    TransformToTarget(traveller.transform, out Vector3 position, out Quaternion rotation);
+                    clone.transform.position = position;
+                    clone.transform.rotation = rotation;
+                }
+
                 if (CheckTravellerPassPortal(traveller))
                 {
-                    GameObject clone = travellerCopies[traveller];
-                    Destroy(clone);
                     TransformToTarget(traveller.transform);
+                    if (clone != null)
+                    {
+                        Destroy(clone);
+                    }
                 }
             }
         }
@@ -107,13 +118,27 @@ public class Portal : MonoBehaviour
             }
             else
             {
-                lstPortalTravellers.Add(portalTraveller);
-                TransformToTarget(portalTraveller.transform, out Vector3 newPos, out Quaternion newRot);
-                PortalTraveller travellerCopy = Instantiate(portalTraveller, newPos, newRot);
-                travellerCopy.enabled = false;
-                travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
+                CreateTravellerClone(portalTraveller);
             }
         }
+    }
+
+    private void CreateTravellerClone(PortalTraveller portalTraveller)
+    {
+        lstPortalTravellers.Add(portalTraveller);
+        TransformToTarget(portalTraveller.transform, out Vector3 newPos, out Quaternion newRot);
+        PortalTraveller travellerCopy = Instantiate(portalTraveller, newPos, newRot);
+
+        travellerCopy.enabled = false;
+
+        SimpleMove simpleMoveComponent = travellerCopy.GetComponent<SimpleMove>();
+        if (simpleMoveComponent)
+        {
+            simpleMoveComponent.enabled = false;
+        }
+
+
+        travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
     }
 
     public void PortalAdjustment(Vector3 localPosition, Vector3 localScale)
