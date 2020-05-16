@@ -13,7 +13,6 @@
         LOD 200
 
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
         #pragma surface surf Standard addshadow
 
         // Use shader model 3.0 target, to get nicer looking lighting
@@ -33,6 +32,8 @@
 
         float3 sliceCentre;
         float3 sliceNormal;
+        int isSliceable = 0;
+        int flip = 0;
 
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -43,8 +44,10 @@
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
-            float sliceSide = dot(sliceNormal, IN.worldPos - sliceCentre);
-            clip (-sliceSide);
+            float sliceSide = lerp(0, dot(sliceNormal, IN.worldPos - sliceCentre), isSliceable);
+            sliceSide = lerp(-sliceSide, sliceSide, flip);
+            clip (sliceSide);
+
             // Albedo comes from a texture tinted by color
             fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
             o.Albedo = c.rgb;

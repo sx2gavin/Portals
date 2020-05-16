@@ -94,11 +94,11 @@ public class Portal : MonoBehaviour
         PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
         if (portalTraveller != null && portalTraveller.enabled)
         {
+            var playerVecFromPortal = other.transform.position - transform.position;
+            enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.forward) < 0;
             if (other.CompareTag("Player"))
             {
                 playerTraveller = portalTraveller;
-                var playerVecFromPortal = other.transform.position - transform.position;
-                enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.forward) < 0;
                 var localPosition = portalDisplay.transform.localPosition;
                 var portalAdjustment = (enteredFromBack ? 1 : -1) * (portalDisplayExpandFactor * 0.1f / 2f);
 
@@ -109,12 +109,12 @@ public class Portal : MonoBehaviour
             }
             else
             {
-                CreateTravellerClone(portalTraveller);
+                CreateTravellerClone(portalTraveller, enteredFromBack);
             }
         }
     }
 
-    private void CreateTravellerClone(PortalTraveller portalTraveller)
+    private void CreateTravellerClone(PortalTraveller portalTraveller, bool enteredFromBack)
     {
         lstPortalTravellers.Add(portalTraveller);
         TransformToTarget(portalTraveller.transform, out Vector3 newPos, out Quaternion newRot);
@@ -128,11 +128,22 @@ public class Portal : MonoBehaviour
             simpleMoveComponent.enabled = false;
         }
 
-        Sliceable slicable = portalTraveller.GetComponent<Sliceable>();
-        // slicable.Slice = gameObject;
+        Sliceable sliceable = portalTraveller.GetComponent<Sliceable>();
+        sliceable.SlicePosition = transform.position;
+        sliceable.SliceNormal = transform.forward;
+        sliceable.IsSliceable = true;
+        sliceable.Flip = !enteredFromBack;
+        sliceable.UpdateMaterialSlice();
 
-        slicable = travellerCopy.GetComponent<Sliceable>();
-        // slicable.Slice = target;
+        if (target)
+        {
+            sliceable = travellerCopy.GetComponent<Sliceable>();
+            sliceable.SlicePosition = target.transform.position;
+            sliceable.SliceNormal = target.transform.forward;
+            sliceable.IsSliceable = true;
+            sliceable.Flip = enteredFromBack;
+            sliceable.UpdateMaterialSlice();
+        }
 
         travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
     }
@@ -158,6 +169,9 @@ public class Portal : MonoBehaviour
             }
             else
             {
+                Sliceable sliceable = portalTraveller.GetComponent<Sliceable>();
+                sliceable.IsSliceable = false;
+                sliceable.UpdateMaterialSlice();
                 TransformToTarget(portalTraveller.transform);
                 lstPortalTravellers.Remove(portalTraveller);
                 DestroyTravellerCopy(portalTraveller);

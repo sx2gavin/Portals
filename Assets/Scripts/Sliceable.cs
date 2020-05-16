@@ -15,7 +15,10 @@ public class Sliceable : MonoBehaviour
         set
         {
             slicePosition = value;
-            UpdateMaterialSlice();
+            if (material)
+            {
+                material.SetVector("sliceCentre", slicePosition);
+            }
         }
     }
 
@@ -26,7 +29,10 @@ public class Sliceable : MonoBehaviour
         set
         {
             sliceNormal = value;
-            UpdateMaterialSlice();
+            if (material)
+            {
+                material.SetVector("sliceNormal", sliceNormal);
+            }
         }
     }
 
@@ -37,7 +43,24 @@ public class Sliceable : MonoBehaviour
         set
         {
             isSliceable = value;
-            UpdateMaterialSlice();
+            if (material)
+            {
+                material.SetInt("isSliceable", isSliceable ? 1 : 0);
+            }
+        }
+    }
+
+    private bool flip;
+    public bool Flip
+    {
+        get => flip;
+        set
+        {
+            flip = value;
+            if (material)
+            {
+                material.SetInt("flip", flip ? 1 : 0);
+            }
         }
     }
 
@@ -46,11 +69,17 @@ public class Sliceable : MonoBehaviour
     {
         mesh = GetComponent<MeshRenderer>();
         material = mesh.material;
+        UpdateMaterialSlice();
     }
 
-    private void UpdateMaterialSlice()
+    public void UpdateMaterialSlice()
     {
-        material.SetVector("sliceCentre", slicePosition);
-        material.SetVector("sliceNormal", sliceNormal);
+        if (material)
+        {
+            material.SetInt("isSliceable", isSliceable ? 1 : 0);
+            material.SetInt("flip", flip ? 1 : 0);
+            material.SetVector("sliceCentre", slicePosition);
+            material.SetVector("sliceNormal", sliceNormal);
+        }
     }
 }
