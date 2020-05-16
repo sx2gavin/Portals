@@ -49,7 +49,7 @@ public class Portal : MonoBehaviour
                     portalRenderCamera.Render();
 
                     var portalPosition = portalDisplay.transform.localPosition;
-                    portalPosition.x = -portalPosition.x;
+                    portalPosition.z = -portalPosition.z;
                     target.PortalAdjustment(portalPosition, portalDisplay.transform.localScale);
 
                     TransformToTarget(playerTraveller.transform);
