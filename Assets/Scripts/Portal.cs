@@ -66,15 +66,6 @@ public class Portal : MonoBehaviour
                     clone.transform.position = position;
                     clone.transform.rotation = rotation;
                 }
-
-                if (CheckTravellerPassPortal(traveller))
-                {
-                    TransformToTarget(traveller.transform);
-                    if (clone != null)
-                    {
-                        Destroy(clone);
-                    }
-                }
             }
         }
     }
@@ -137,9 +128,11 @@ public class Portal : MonoBehaviour
             simpleMoveComponent.enabled = false;
         }
 
-        Slicable slicable = portalTraveller.GetComponent<Slicable>();
+        Sliceable slicable = portalTraveller.GetComponent<Sliceable>();
+        // slicable.Slice = gameObject;
 
-        slicable.Slice = gameObject;
+        slicable = travellerCopy.GetComponent<Sliceable>();
+        // slicable.Slice = target;
 
         travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
     }
@@ -165,6 +158,7 @@ public class Portal : MonoBehaviour
             }
             else
             {
+                TransformToTarget(portalTraveller.transform);
                 lstPortalTravellers.Remove(portalTraveller);
                 DestroyTravellerCopy(portalTraveller);
                 travellerCopies.Remove(portalTraveller);
