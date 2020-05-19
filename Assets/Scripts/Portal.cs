@@ -6,7 +6,7 @@ using UnityEngine;
 public class Portal : MonoBehaviour
 {
     [SerializeField] private Portal target;
-    [SerializeField] private PortalCamera portalRenderCamera;
+    [SerializeField] private PortalCamera targetPortalRenderCamera;
     [SerializeField] private PortalDisplay portalDisplay;
     [SerializeField] private float portalDisplayExpandFactor = 15.0f;
 
@@ -22,8 +22,8 @@ public class Portal : MonoBehaviour
     {
         if (target)
         {
-            var texture = target.GetPortalCameraRenderTexture();
-            SetPortalDisplayTexture(texture);
+            var texture = targetPortalRenderCamera.GetRenderTexture();
+            portalDisplay.SetTexture(texture);
         }
 
         originalPortalScale = portalDisplay.transform.localScale;
@@ -35,18 +35,18 @@ public class Portal : MonoBehaviour
         if (target)
         {
             Camera mainCamera = Camera.main;
-            var cameraLocalPosition = this.transform.InverseTransformPoint(mainCamera.transform.position);
-            var cameraLocalRotation = Quaternion.Inverse(transform.rotation) * mainCamera.transform.rotation;
 
-            target.SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
+            TransformToTarget(mainCamera.transform, out Vector3 targetPosition, out Quaternion targetRotation);
+            targetPortalRenderCamera.transform.position = targetPosition;
+            targetPortalRenderCamera.transform.rotation = targetRotation;
             
             if (playerTraveller != null)
             {
                 if (CheckTravellerPassPortal(playerTraveller))
                 {
                     // pre-render target camera before player is teleported to smooth the transition.
-                    SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
-                    portalRenderCamera.Render();
+                    // SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
+                    // portalRenderCamera.Render();
 
                     var portalPosition = portalDisplay.transform.localPosition;
                     portalPosition.z = -portalPosition.z;
@@ -70,23 +70,13 @@ public class Portal : MonoBehaviour
         }
     }
 
-    public void SetPortalCameraLocalTransform(Vector3 localPosition, Quaternion localRotation)
+    public void SetTargetPortalCameraLocalTransform(Vector3 localPosition, Quaternion localRotation)
     {
-        if (portalRenderCamera)
+        if (targetPortalRenderCamera)
         {
-            portalRenderCamera.transform.localPosition = localPosition;
-            portalRenderCamera.transform.localRotation = localRotation;
+            targetPortalRenderCamera.transform.localPosition = localPosition;
+            targetPortalRenderCamera.transform.localRotation = localRotation;
         }
-    }
-
-    public RenderTexture GetPortalCameraRenderTexture()
-    {
-        return portalRenderCamera.GetRenderTexture();
-    }
-
-    public void SetPortalDisplayTexture(RenderTexture texture)
-    {
-        portalDisplay.SetTexture(texture);
     }
 
     public void OnTriggerEnter(Collider other)
@@ -178,12 +168,6 @@ public class Portal : MonoBehaviour
                 travellerCopies.Remove(portalTraveller);
             }
         }
-    }
-
-    public void ReceivePlayer(PortalTraveller traveller)
-    {
-        traveller.transform.position = portalRenderCamera.transform.position;
-        Camera.main.transform.rotation = portalRenderCamera.transform.rotation;
     }
 
     private bool CheckTravellerPassPortal(PortalTraveller traveller)

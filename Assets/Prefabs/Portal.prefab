@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7891389906172627908}
   - component: {fileID: 7891389906172627931}
   m_Layer: 8
-  m_Name: Camera
+  m_Name: Portal Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -442,9 +442,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
-  portalRenderCamera: {fileID: 7891389906172627931}
+  targetPortalRenderCamera: {fileID: 7891389906172627931}
   portalDisplay: {fileID: 7891389907037200851}
-  portalDisplayExpandFactor: 5
+  portalDisplayExpandFactor: 2
 --- !u!65 &7891389907172752924
 BoxCollider:
   m_ObjectHideFlags: 0
