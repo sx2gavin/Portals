@@ -5,43 +5,45 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class PortalCamera : MonoBehaviour
 {
-    private new Camera camera;
+    public delegate void ViewTextureUpdated(RenderTexture newTexture);
+    public event ViewTextureUpdated TextureUpdated;
+    private Camera portalCamera;
+    private RenderTexture viewTexture;
+
     // Start is called before the first frame update
     void Start()
     {
-        camera = GetComponent<Camera>();
-        camera.targetTexture = new RenderTexture(Display.main.renderingWidth, Display.main.renderingHeight, 24);
+        portalCamera = GetComponent<Camera>();
+
+        // disable portalCamera so we can render the camera manual using Render()
+        // portalCamera.enabled = false;
+        // portalCamera.targetTexture = new RenderTexture(Display.main.renderingWidth, Display.main.renderingHeight, 24);
+        GetRenderTexture();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
+
     }
 
     public RenderTexture GetRenderTexture()
     {
-        // // The Render Texture in RenderTexture.active is the one
-        // // that will be read by ReadPixels.
-        // var currentRT = RenderTexture.active;
-        // RenderTexture.active = camera.targetTexture;
+        if (viewTexture == null || viewTexture.width != Screen.width || viewTexture.height != Screen.height)
+        {
+            if (viewTexture != null)
+            {
+                viewTexture.Release();
+            }
 
-        // // Render the camera's view.
-        // camera.Render();
-
-        // // Make a new texture and read the active Render Texture into it.
-        // Texture2D image = new Texture2D(camera.targetTexture.width, camera.targetTexture.height);
-        // image.ReadPixels(new Rect(0, 0, camera.targetTexture.width, camera.targetTexture.height), 0, 0);
-        // image.Apply();
-
-        // // Replace the original active Render Texture.
-        // RenderTexture.active = currentRT;
-        // return image;
-
-        return camera.targetTexture;
+            viewTexture = new RenderTexture(Screen.width, Screen.height, 0);
+            portalCamera.targetTexture = viewTexture;
+            // TextureUpdated?.Invoke(viewTexture);
+        }
+        return viewTexture;
     }
 
     public void Render()
     {
-        camera.Render();
+        portalCamera.Render();
     }
 }
