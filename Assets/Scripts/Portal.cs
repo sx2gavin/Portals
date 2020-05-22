@@ -12,6 +12,7 @@ public class Portal : MonoBehaviour
 
     private Vector3 originalPortalScale;
     private bool enteredFromBack;
+    private Bounds displayBounds;
 
     private PortalTraveller playerTraveller;
     private List<PortalTraveller> lstPortalTravellers = new List<PortalTraveller>();
@@ -20,6 +21,7 @@ public class Portal : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        targetPortalRenderCamera.TextureUpdated += PortalRenderCameraTextureUpdated;
         if (target)
         {
             var texture = targetPortalRenderCamera.GetRenderTexture();
@@ -27,6 +29,16 @@ public class Portal : MonoBehaviour
         }
 
         originalPortalScale = portalDisplay.transform.localScale;
+
+        if (portalDisplay && portalDisplay.GetComponent<MeshRenderer>())
+        {
+            displayBounds = portalDisplay.GetComponent<MeshRenderer>().bounds;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        targetPortalRenderCamera.TextureUpdated -= PortalRenderCameraTextureUpdated;
     }
 
     // Update is called once per frame
@@ -36,17 +48,18 @@ public class Portal : MonoBehaviour
         {
             Camera mainCamera = Camera.main;
 
-            TransformToTarget(mainCamera.transform, out Vector3 targetPosition, out Quaternion targetRotation);
-            targetPortalRenderCamera.transform.position = targetPosition;
-            targetPortalRenderCamera.transform.rotation = targetRotation;
+            if (GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(mainCamera), displayBounds))
+            {
+                TransformToTarget(mainCamera.transform, out Vector3 targetPosition, out Quaternion targetRotation);
+                ManuallyRenderCamera(targetPosition, targetRotation);
+            }
             
             if (playerTraveller != null)
             {
                 if (CheckTravellerPassPortal(playerTraveller))
                 {
                     // pre-render target camera before player is teleported to smooth the transition.
-                    // SetPortalCameraLocalTransform(cameraLocalPosition, cameraLocalRotation);
-                    // portalRenderCamera.Render();
+                    target.ManuallyRenderCamera(mainCamera.transform.position, mainCamera.transform.rotation);
 
                     var portalPosition = portalDisplay.transform.localPosition;
                     portalPosition.z = -portalPosition.z;
@@ -67,15 +80,6 @@ public class Portal : MonoBehaviour
                     clone.transform.rotation = rotation;
                 }
             }
-        }
-    }
-
-    public void SetTargetPortalCameraLocalTransform(Vector3 localPosition, Quaternion localRotation)
-    {
-        if (targetPortalRenderCamera)
-        {
-            targetPortalRenderCamera.transform.localPosition = localPosition;
-            targetPortalRenderCamera.transform.localRotation = localRotation;
         }
     }
 
@@ -221,6 +225,18 @@ public class Portal : MonoBehaviour
                 Destroy(clone);
             }
         }
+    }
+
+    private void PortalRenderCameraTextureUpdated(RenderTexture newTexture)
+    {
+        portalDisplay.SetTexture(newTexture);
+    }
+
+    public void ManuallyRenderCamera(Vector3 position, Quaternion rotation)
+    {
+        targetPortalRenderCamera.transform.position = position;
+        targetPortalRenderCamera.transform.rotation = rotation;
+        targetPortalRenderCamera.Render();
     }
 
 }

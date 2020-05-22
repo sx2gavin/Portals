@@ -16,17 +16,17 @@ public class PortalCamera : MonoBehaviour
         portalCamera = GetComponent<Camera>();
 
         // disable portalCamera so we can render the camera manual using Render()
-        // portalCamera.enabled = false;
+        portalCamera.enabled = false;
         // portalCamera.targetTexture = new RenderTexture(Display.main.renderingWidth, Display.main.renderingHeight, 24);
-        GetRenderTexture();
+        // GetRenderTexture();
     }
 
     private void Update()
     {
-
+        UpdateTexture();
     }
 
-    public RenderTexture GetRenderTexture()
+    private void UpdateTexture()
     {
         if (viewTexture == null || viewTexture.width != Screen.width || viewTexture.height != Screen.height)
         {
@@ -37,8 +37,13 @@ public class PortalCamera : MonoBehaviour
 
             viewTexture = new RenderTexture(Screen.width, Screen.height, 0);
             portalCamera.targetTexture = viewTexture;
-            // TextureUpdated?.Invoke(viewTexture);
+            TextureUpdated?.Invoke(viewTexture);
         }
+    }
+
+    public RenderTexture GetRenderTexture()
+    {
+        UpdateTexture();
         return viewTexture;
     }
 
