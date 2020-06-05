@@ -14,9 +14,9 @@ public class Portal : MonoBehaviour
     private bool enteredFromBack;
     private Bounds displayBounds;
 
-    private PortalTraveller playerTraveller;
-    private List<PortalTraveller> lstPortalTravellers = new List<PortalTraveller>();
-    private Dictionary<PortalTraveller, GameObject> travellerCopies = new Dictionary<PortalTraveller, GameObject>();
+    private PortalTraveler playerTraveler;
+    private List<PortalTraveler> lstPortalTravelers = new List<PortalTraveler>();
+    private Dictionary<PortalTraveler, GameObject> travelerCopies = new Dictionary<PortalTraveler, GameObject>();
 
     // Start is called before the first frame update
     void Start()
@@ -54,9 +54,9 @@ public class Portal : MonoBehaviour
                 ManuallyRenderCamera(targetPosition, targetRotation);
             }
             
-            if (playerTraveller != null)
+            if (playerTraveler != null)
             {
-                if (CheckTravellerPassPortal(playerTraveller))
+                if (CheckTravelerPassPortal(playerTraveler))
                 {
                     // pre-render target camera before player is teleported to smooth the transition.
                     target.ManuallyRenderCamera(mainCamera.transform.position, mainCamera.transform.rotation);
@@ -65,17 +65,17 @@ public class Portal : MonoBehaviour
                     portalPosition.z = -portalPosition.z;
                     target.PortalAdjustment(portalPosition, portalDisplay.transform.localScale);
 
-                    TransformToTarget(playerTraveller.transform);
+                    TransformToTarget(playerTraveler.transform);
                 }
             }
 
-            foreach (PortalTraveller traveller in lstPortalTravellers)
+            foreach (PortalTraveler traveler in lstPortalTravelers)
             {
                 GameObject clone = null;
-                if (travellerCopies.ContainsKey(traveller))
+                if (travelerCopies.ContainsKey(traveler))
                 {
-                    clone = travellerCopies[traveller];
-                    TransformToTarget(traveller.transform, out Vector3 position, out Quaternion rotation);
+                    clone = travelerCopies[traveler];
+                    TransformToTarget(traveler.transform, out Vector3 position, out Quaternion rotation);
                     clone.transform.position = position;
                     clone.transform.rotation = rotation;
                 }
@@ -85,14 +85,14 @@ public class Portal : MonoBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
-        PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
-        if (portalTraveller != null && portalTraveller.enabled)
+        PortalTraveler portalTraveler = other.GetComponent<PortalTraveler>();
+        if (portalTraveler != null && portalTraveler.enabled)
         {
             var playerVecFromPortal = other.transform.position - transform.position;
             enteredFromBack = Vector3.Dot(playerVecFromPortal, transform.forward) < 0;
             if (other.CompareTag("Player"))
             {
-                playerTraveller = portalTraveller;
+                playerTraveler = portalTraveler;
                 var localPosition = portalDisplay.transform.localPosition;
                 var portalAdjustment = (enteredFromBack ? 1 : -1) * (portalDisplayExpandFactor * 0.1f / 2f);
 
@@ -103,26 +103,26 @@ public class Portal : MonoBehaviour
             }
             else
             {
-                CreateTravellerClone(portalTraveller, enteredFromBack);
+                CreateTravelerClone(portalTraveler, enteredFromBack);
             }
         }
     }
 
-    private void CreateTravellerClone(PortalTraveller portalTraveller, bool enteredFromBack)
+    private void CreateTravelerClone(PortalTraveler portalTraveler, bool enteredFromBack)
     {
-        lstPortalTravellers.Add(portalTraveller);
-        TransformToTarget(portalTraveller.transform, out Vector3 newPos, out Quaternion newRot);
-        PortalTraveller travellerCopy = Instantiate(portalTraveller, newPos, newRot);
+        lstPortalTravelers.Add(portalTraveler);
+        TransformToTarget(portalTraveler.transform, out Vector3 newPos, out Quaternion newRot);
+        PortalTraveler travelerCopy = Instantiate(portalTraveler, newPos, newRot);
 
-        travellerCopy.enabled = false;
+        travelerCopy.enabled = false;
 
-        SimpleMove simpleMoveComponent = travellerCopy.GetComponent<SimpleMove>();
+        SimpleMove simpleMoveComponent = travelerCopy.GetComponent<SimpleMove>();
         if (simpleMoveComponent)
         {
             simpleMoveComponent.enabled = false;
         }
 
-        Sliceable sliceable = portalTraveller.GetComponent<Sliceable>();
+        Sliceable sliceable = portalTraveler.GetComponent<Sliceable>();
         sliceable.SlicePosition = transform.position;
         sliceable.SliceNormal = transform.forward;
         sliceable.IsSliceable = true;
@@ -131,7 +131,7 @@ public class Portal : MonoBehaviour
 
         if (target)
         {
-            sliceable = travellerCopy.GetComponent<Sliceable>();
+            sliceable = travelerCopy.GetComponent<Sliceable>();
             sliceable.SlicePosition = target.transform.position;
             sliceable.SliceNormal = target.transform.forward;
             sliceable.IsSliceable = true;
@@ -139,7 +139,7 @@ public class Portal : MonoBehaviour
             sliceable.UpdateMaterialSlice();
         }
 
-        travellerCopies.Add(portalTraveller, travellerCopy.gameObject);
+        travelerCopies.Add(portalTraveler, travelerCopy.gameObject);
     }
 
     public void PortalAdjustment(Vector3 localPosition, Vector3 localScale)
@@ -150,12 +150,12 @@ public class Portal : MonoBehaviour
 
     public void OnTriggerExit(Collider other)
     {
-        PortalTraveller portalTraveller = other.GetComponent<PortalTraveller>();
-        if (portalTraveller != null)
+        PortalTraveler portalTraveler = other.GetComponent<PortalTraveler>();
+        if (portalTraveler != null)
         {
             if (other.CompareTag("Player"))
             {
-                playerTraveller = null;
+                playerTraveler = null;
                 var originalPosition = new Vector3(0, portalDisplay.transform.localPosition.y, 0);
 
                 PortalAdjustment(originalPosition, originalPortalScale);
@@ -163,22 +163,22 @@ public class Portal : MonoBehaviour
             }
             else
             {
-                Sliceable sliceable = portalTraveller.GetComponent<Sliceable>();
+                Sliceable sliceable = portalTraveler.GetComponent<Sliceable>();
                 sliceable.IsSliceable = false;
                 sliceable.UpdateMaterialSlice();
-                TransformToTarget(portalTraveller.transform);
-                lstPortalTravellers.Remove(portalTraveller);
-                DestroyTravellerCopy(portalTraveller);
-                travellerCopies.Remove(portalTraveller);
+                TransformToTarget(portalTraveler.transform);
+                lstPortalTravelers.Remove(portalTraveler);
+                DestroyTravelerCopy(portalTraveler);
+                travelerCopies.Remove(portalTraveler);
             }
         }
     }
 
-    private bool CheckTravellerPassPortal(PortalTraveller traveller)
+    private bool CheckTravelerPassPortal(PortalTraveler traveler)
     {
         Vector3 forward = transform.forward;
-        Vector3 previousVec = traveller.LastFramePosition - transform.position;
-        Vector3 currentVec = traveller.transform.position - transform.position;
+        Vector3 previousVec = traveler.LastFramePosition - transform.position;
+        Vector3 currentVec = traveler.transform.position - transform.position;
         float previousSign = Mathf.Sign(Vector3.Dot(previousVec, forward));
         float currentSign = Mathf.Sign(Vector3.Dot(currentVec, forward));
         return previousSign + currentSign == 0;
@@ -215,11 +215,11 @@ public class Portal : MonoBehaviour
         }
     }
 
-    private void DestroyTravellerCopy(PortalTraveller traveller)
+    private void DestroyTravelerCopy(PortalTraveler traveler)
     {
-        if (travellerCopies != null && travellerCopies.ContainsKey(traveller))
+        if (travelerCopies != null && travelerCopies.ContainsKey(traveler))
         {
-            GameObject clone = travellerCopies[traveller];
+            GameObject clone = travelerCopies[traveler];
             if (clone != null)
             {
                 Destroy(clone);

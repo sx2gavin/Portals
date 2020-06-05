@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PortalTraveller : MonoBehaviour
+public class PortalTraveler : MonoBehaviour
 {
     [HideInInspector] public Vector3 LastFramePosition;
 
