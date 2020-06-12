@@ -236,6 +236,7 @@ public class Portal : MonoBehaviour
     {
         targetPortalRenderCamera.transform.position = position;
         targetPortalRenderCamera.transform.rotation = rotation;
+        targetPortalRenderCamera.UpdateNearClippingPlane(target.transform);
         targetPortalRenderCamera.Render();
     }
 

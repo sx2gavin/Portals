@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,16 +15,31 @@ public class PortalCamera : MonoBehaviour
     void Start()
     {
         portalCamera = GetComponent<Camera>();
-
-        // disable portalCamera so we can render the camera manual using Render()
-        portalCamera.enabled = false;
-        // portalCamera.targetTexture = new RenderTexture(Display.main.renderingWidth, Display.main.renderingHeight, 24);
-        // GetRenderTexture();
+        if (Application.isPlaying)
+        {
+            // disable portalCamera so we can render the camera manual using Render()
+            portalCamera.enabled = false;
+        }
     }
 
     private void Update()
     {
-        UpdateTexture();
+        if (Application.isPlaying)
+        {
+            UpdateTexture();
+        }
+    }
+
+    public void UpdateNearClippingPlane(Transform nearClippingPlane)
+    {
+        int flip = Math.Sign(Vector3.Dot(nearClippingPlane.forward, (nearClippingPlane.position - transform.position)));
+
+        Vector3 cameraSpaceClipPlaneOrigin = portalCamera.worldToCameraMatrix.MultiplyPoint(nearClippingPlane.position);
+        Vector3 cameraSpaceClipPlaneNormal = portalCamera.worldToCameraMatrix.MultiplyVector(nearClippingPlane.forward) * flip;
+
+        float planeDistance = -Vector3.Dot(cameraSpaceClipPlaneOrigin, cameraSpaceClipPlaneNormal);
+
+        portalCamera.projectionMatrix = portalCamera.CalculateObliqueMatrix(new Vector4(cameraSpaceClipPlaneNormal.x, cameraSpaceClipPlaneNormal.y, cameraSpaceClipPlaneNormal.z, planeDistance));
     }
 
     private void UpdateTexture()
